@@ -12,6 +12,7 @@ def render(data: dict):
     acc       = data['acc']
     bal_acc   = data['balanced_acc']
     cv_scores = data['cv_scores']
+    pt = data.get("plot_theme", {})
 
     c1, c2, c3, c4 = st.columns(4)
     cards = [
@@ -55,23 +56,23 @@ def render(data: dict):
     a           = data['class_dist_after']
     label_names = list(data['label_names'])
 
-    fig, axes = plt.subplots(1, 2, figsize=(10, 4), facecolor='#0f172a')
+    fig, axes = plt.subplots(1, 2, figsize=(10, 4), facecolor=pt.get("fig_bg", "#0f172a"))
     for ax, dist, title in [(axes[0], b, "Before SMOTE"), (axes[1], a, "After SMOTE")]:
-        ax.set_facecolor('#1e293b')
+        ax.set_facecolor(pt.get("ax_bg", "#1e293b"))
         vals = [dist.get(i, 0) for i in range(len(label_names))]
         bars = ax.bar(label_names, vals,
-                      color=['#ef4444', '#22c55e', '#f59e0b'],
-                      edgecolor='#334155', linewidth=1.2)
-        ax.set_title(title, color='#e2e8f0', fontsize=13, fontweight='bold')
-        ax.tick_params(colors='#94a3b8')
+                      color=pt.get("bar_colors", ['#ef4444', '#22c55e', '#f59e0b']),
+                      edgecolor=pt.get("spine", "#334155"), linewidth=1.2)
+        ax.set_title(title, color=pt.get("title", "#e2e8f0"), fontsize=13, fontweight='bold')
+        ax.tick_params(colors=pt.get("text", "#94a3b8"))
         for spine in ax.spines.values():
-            spine.set_edgecolor('#334155')
+            spine.set_edgecolor(pt.get("spine", "#334155"))
         for bar, v in zip(bars, vals):
             ax.text(bar.get_x() + bar.get_width() / 2,
                     bar.get_height() + 1, str(v),
-                    ha='center', color='#cbd5e1', fontsize=10)
+                    ha='center', color=pt.get("title", "#e2e8f0"), fontsize=10)
 
-    fig.patch.set_facecolor('#0f172a')
+    fig.patch.set_facecolor(pt.get("fig_bg", "#0f172a"))
     plt.tight_layout()
     st.pyplot(fig)
     plt.close()

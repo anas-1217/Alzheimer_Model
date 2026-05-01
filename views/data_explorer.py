@@ -9,6 +9,7 @@ def render(data: dict):
 
     df       = data['df']
     features = data['features']
+    pt = data.get("plot_theme", {})
 
     # ── RAW DATA ────────────────────────────────────────────────────────────
     section("Raw Dataset (First 50 rows)")
@@ -22,28 +23,35 @@ def render(data: dict):
     section("Feature Distributions")
     feat_sel = st.selectbox("Select feature to plot", features)
 
-    fig, ax = plt.subplots(figsize=(8, 4), facecolor='#0f172a')
-    ax.set_facecolor('#1e293b')
+    fig, ax = plt.subplots(figsize=(8, 4), facecolor=pt.get("fig_bg", "#0f172a"))
+    ax.set_facecolor(pt.get("ax_bg", "#1e293b"))
     ax.hist(df[feat_sel].dropna(), bins=30,
-            color='#7c3aed', edgecolor='#4c1d95', alpha=0.9)
-    ax.set_title(f'Distribution of {feat_sel}', color='#e2e8f0', fontsize=13)
-    ax.tick_params(colors='#94a3b8')
+            color=pt.get("accent", "#7c3aed"), edgecolor=pt.get("spine", "#334155"), alpha=0.9)
+    ax.set_title(f'Distribution of {feat_sel}', color=pt.get("title", "#e2e8f0"), fontsize=13)
+    ax.tick_params(colors=pt.get("text", "#94a3b8"))
     for spine in ax.spines.values():
-        spine.set_edgecolor('#334155')
-    fig.patch.set_facecolor('#0f172a')
+        spine.set_edgecolor(pt.get("spine", "#334155"))
+    fig.patch.set_facecolor(pt.get("fig_bg", "#0f172a"))
     st.pyplot(fig)
     plt.close()
 
     # ── CORRELATION HEATMAP ─────────────────────────────────────────────────
     section("Correlation Heatmap")
-    fig, ax = plt.subplots(figsize=(10, 6), facecolor='#0f172a')
-    ax.set_facecolor('#1e293b')
-    sns.heatmap(df[features].corr(), annot=True, fmt='.2f', cmap='coolwarm',
-                ax=ax, linewidths=0.4, linecolor='#1e293b',
-                annot_kws={'size': 9, 'color': 'white'})
-    ax.tick_params(colors='#94a3b8')
-    fig.patch.set_facecolor('#0f172a')
-    plt.title("Feature Correlation Matrix", color='#e2e8f0', fontsize=13)
+    fig, ax = plt.subplots(figsize=(10, 6), facecolor=pt.get("fig_bg", "#0f172a"))
+    ax.set_facecolor(pt.get("ax_bg", "#1e293b"))
+    sns.heatmap(
+        df[features].corr(),
+        annot=True,
+        fmt='.2f',
+        cmap='coolwarm' if data.get("ui_theme") == "Dark" else "RdBu_r",
+        ax=ax,
+        linewidths=0.4,
+        linecolor=pt.get("ax_bg", "#1e293b"),
+        annot_kws={'size': 9, 'color': pt.get("title", "#e2e8f0")},
+    )
+    ax.tick_params(colors=pt.get("text", "#94a3b8"))
+    fig.patch.set_facecolor(pt.get("fig_bg", "#0f172a"))
+    plt.title("Feature Correlation Matrix", color=pt.get("title", "#e2e8f0"), fontsize=13)
     plt.tight_layout()
     st.pyplot(fig)
     plt.close()

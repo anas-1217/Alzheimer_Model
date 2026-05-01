@@ -21,6 +21,7 @@ def render(data: dict):
     report      = data['report']
     features    = data['features']
     label_names = data['label_names']
+    pt = data.get("plot_theme", {})
 
     # ── METRICS ─────────────────────────────────────────────────────────────
     section("Performance Metrics")
@@ -37,16 +38,16 @@ def render(data: dict):
 
     # ── CONFUSION MATRIX ────────────────────────────────────────────────────
     section("Confusion Matrix")
-    fig, ax = plt.subplots(figsize=(7, 5), facecolor='#0f172a')
-    ax.set_facecolor('#1e293b')
-    sns.heatmap(cm, annot=True, fmt='d', cmap='Purples', ax=ax,
+    fig, ax = plt.subplots(figsize=(7, 5), facecolor=pt.get("fig_bg", "#0f172a"))
+    ax.set_facecolor(pt.get("ax_bg", "#1e293b"))
+    sns.heatmap(cm, annot=True, fmt='d', cmap=pt.get("heatmap_cmap", "Purples"), ax=ax,
                 xticklabels=label_names, yticklabels=label_names,
-                linewidths=1, linecolor='#0f172a',
-                annot_kws={'size': 14, 'weight': 'bold'})
-    ax.set_xlabel('Predicted', color='#94a3b8')
-    ax.set_ylabel('Actual',    color='#94a3b8')
-    ax.tick_params(colors='#cbd5e1')
-    fig.patch.set_facecolor('#0f172a')
+                linewidths=1, linecolor=pt.get("fig_bg", "#0f172a"),
+                annot_kws={'size': 14, 'weight': 'bold', 'color': pt.get("title", "#e2e8f0")})
+    ax.set_xlabel('Predicted', color=pt.get("text", "#94a3b8"))
+    ax.set_ylabel('Actual',    color=pt.get("text", "#94a3b8"))
+    ax.tick_params(colors=pt.get("text", "#94a3b8"))
+    fig.patch.set_facecolor(pt.get("fig_bg", "#0f172a"))
     plt.tight_layout()
     st.pyplot(fig)
     plt.close()
@@ -59,19 +60,19 @@ def render(data: dict):
 
     # ── CROSS-VALIDATION ────────────────────────────────────────────────────
     section("Cross-Validation Scores (5-Fold, Balanced Accuracy)")
-    fig, ax = plt.subplots(figsize=(8, 3), facecolor='#0f172a')
-    ax.set_facecolor('#1e293b')
+    fig, ax = plt.subplots(figsize=(8, 3), facecolor=pt.get("fig_bg", "#0f172a"))
+    ax.set_facecolor(pt.get("ax_bg", "#1e293b"))
     ax.bar([f'Fold {i+1}' for i in range(5)], cv_scores,
-           color=['#7c3aed', '#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe'],
-           edgecolor='#4c1d95')
-    ax.axhline(cv_scores.mean(), color='#f472b6', linestyle='--', linewidth=1.5,
+           color=['#7c3aed', '#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe'] if data.get("ui_theme") == "Dark" else ['#1d4ed8', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd'],
+           edgecolor=pt.get("spine", "#334155"))
+    ax.axhline(cv_scores.mean(), color=pt.get("accent", "#f472b6"), linestyle='--', linewidth=1.5,
                label=f'Mean BA: {cv_scores.mean():.3f}')
     ax.set_ylim(0, 1.1)
-    ax.tick_params(colors='#94a3b8')
-    ax.legend(labelcolor='#cbd5e1', facecolor='#1e293b')
+    ax.tick_params(colors=pt.get("text", "#94a3b8"))
+    ax.legend(labelcolor=pt.get("text", "#94a3b8"), facecolor=pt.get("legend_bg", "#1e293b"))
     for spine in ax.spines.values():
-        spine.set_edgecolor('#334155')
-    fig.patch.set_facecolor('#0f172a')
+        spine.set_edgecolor(pt.get("spine", "#334155"))
+    fig.patch.set_facecolor(pt.get("fig_bg", "#0f172a"))
     plt.tight_layout()
     st.pyplot(fig)
     plt.close()
@@ -81,28 +82,28 @@ def render(data: dict):
     import pandas as pd
     fi_df = (pd.DataFrame({'Feature': features, 'Importance': clf.feature_importances_})
                .sort_values('Importance', ascending=True))
-    fig, ax = plt.subplots(figsize=(8, 5), facecolor='#0f172a')
-    ax.set_facecolor('#1e293b')
+    fig, ax = plt.subplots(figsize=(8, 5), facecolor=pt.get("fig_bg", "#0f172a"))
+    ax.set_facecolor(pt.get("ax_bg", "#1e293b"))
     ax.barh(fi_df['Feature'], fi_df['Importance'],
-            color='#7c3aed', edgecolor='#4c1d95')
-    ax.tick_params(colors='#94a3b8')
+            color=pt.get("accent", "#7c3aed"), edgecolor=pt.get("spine", "#334155"))
+    ax.tick_params(colors=pt.get("text", "#94a3b8"))
     for spine in ax.spines.values():
-        spine.set_edgecolor('#334155')
-    ax.set_xlabel('Importance', color='#94a3b8')
-    ax.set_title('Feature Importance from Decision Tree', color='#e2e8f0', fontsize=13)
-    fig.patch.set_facecolor('#0f172a')
+        spine.set_edgecolor(pt.get("spine", "#334155"))
+    ax.set_xlabel('Importance', color=pt.get("text", "#94a3b8"))
+    ax.set_title('Feature Importance from Decision Tree', color=pt.get("title", "#e2e8f0"), fontsize=13)
+    fig.patch.set_facecolor(pt.get("fig_bg", "#0f172a"))
     plt.tight_layout()
     st.pyplot(fig)
     plt.close()
 
     # ── TREE VISUALIZATION ──────────────────────────────────────────────────
     section("Decision Tree Visualization (Depth 3)")
-    fig, ax = plt.subplots(figsize=(18, 8), facecolor='#0f172a')
-    ax.set_facecolor('#0f172a')
+    fig, ax = plt.subplots(figsize=(18, 8), facecolor=pt.get("fig_bg", "#0f172a"))
+    ax.set_facecolor(pt.get("fig_bg", "#0f172a"))
     plot_tree(clf, feature_names=features, class_names=label_names,
               filled=True, rounded=True, max_depth=3, ax=ax,
               fontsize=9, proportion=False)
-    fig.patch.set_facecolor('#0f172a')
+    fig.patch.set_facecolor(pt.get("fig_bg", "#0f172a"))
     plt.tight_layout()
     st.pyplot(fig)
     plt.close()

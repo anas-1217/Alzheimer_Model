@@ -9,10 +9,11 @@ def render(data: dict):
     st.markdown("Enter patient clinical values below to get a real-time Alzheimer's classification.")
     st.markdown("---")
 
-    model_pipeline = data['model_pipeline']      # Calibrated decision tree
-    tree_pipeline = data['tree_pipeline']        # Raw tree pipeline for leaf diagnostics
+    model_pipeline = data['model_pipeline']
+    tree_pipeline = data['tree_pipeline']
     logistic_pipeline = data['logistic_pipeline']
     label_names = data['label_names']
+    pt = data.get("plot_theme", {})
 
     # ── INPUT FORM ──────────────────────────────────────────────────────────
     col1, col2 = st.columns(2)
@@ -34,14 +35,14 @@ def render(data: dict):
 
     model_choice = st.radio(
         "Prediction model",
-        ["Calibrated Decision Tree (Hunt's)", "Logistic Regression (Softer)"],
+        ["Decision Tree (Hunt's)", "Logistic Regression (Softer)"],
         horizontal=True,
     )
 
     # ── CLASSIFY ────────────────────────────────────────────────────────────
     if st.button("🔍 Classify Patient", use_container_width=True):
         patient = np.array([[age, sex_val, educ, ses, mmse, cdr, etiv, nwbv, asf]])
-        if model_choice == "Calibrated Decision Tree (Hunt's)":
+        if model_choice == "Decision Tree (Hunt's)":
             pred = model_pipeline.predict(patient)[0]
             proba = model_pipeline.predict_proba(patient)[0]
         else:
@@ -55,22 +56,22 @@ def render(data: dict):
 
         # ── PROBABILITY BAR CHART ───────────────────────────────────────────
         section("Class Probabilities")
-        fig, ax = plt.subplots(figsize=(7, 3), facecolor='#0f172a')
-        ax.set_facecolor('#1e293b')
-        colors = ['#ef4444', '#22c55e', '#f59e0b']
+        fig, ax = plt.subplots(figsize=(7, 3), facecolor=pt.get("fig_bg", "#0f172a"))
+        ax.set_facecolor(pt.get("ax_bg", "#1e293b"))
+        colors = pt.get("bar_colors", ['#ef4444', '#22c55e', '#f59e0b'])
         bars   = ax.bar(label_names, proba,
-                        color=colors[:len(label_names)], edgecolor='#1e293b')
+                        color=colors[:len(label_names)], edgecolor=pt.get("spine", "#334155"))
         for bar, p in zip(bars, proba):
             ax.text(bar.get_x() + bar.get_width() / 2,
                     bar.get_height() + 0.01,
                     f'{p*100:.1f}%',
-                    ha='center', color='#e2e8f0', fontsize=11)
+                    ha='center', color=pt.get("title", "#e2e8f0"), fontsize=11)
         ax.set_ylim(0, 1.15)
-        ax.tick_params(colors='#94a3b8')
+        ax.tick_params(colors=pt.get("text", "#94a3b8"))
         for spine in ax.spines.values():
-            spine.set_edgecolor('#334155')
-        ax.set_ylabel('Probability', color='#94a3b8')
-        fig.patch.set_facecolor('#0f172a')
+            spine.set_edgecolor(pt.get("spine", "#334155"))
+        ax.set_ylabel('Probability', color=pt.get("text", "#94a3b8"))
+        fig.patch.set_facecolor(pt.get("fig_bg", "#0f172a"))
         plt.tight_layout()
         st.pyplot(fig)
         plt.close()
