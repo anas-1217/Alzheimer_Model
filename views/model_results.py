@@ -107,7 +107,6 @@ def render(data: dict):
 
     # ── FEATURE IMPORTANCE ──────────────────────────────────────────────────
     section("Feature Importance")
-    import pandas as pd
     fi_df = (pd.DataFrame({'Feature': features, 'Importance': clf.feature_importances_})
                .sort_values('Importance', ascending=True))
     fig, ax = plt.subplots(figsize=(8, 5), facecolor=pt.get("fig_bg", "#0f172a"))
