@@ -19,17 +19,17 @@ def render(data: dict):
     col1, col2 = st.columns(2)
 
     with col1:
-        age  = st.slider("Age", 60, 98, 75)
-        sex  = st.selectbox("Gender", ["Female (0)", "Male (1)"])
-        educ = st.slider("Education (years)", 1, 23, 12)
-        ses  = st.slider("Socioeconomic Status (1=high, 5=low)", 1, 5, 2)
-        mmse = st.slider("MMSE Score (0-30)", 0, 30, 25)
+        age  = st.slider("Age", 60, 98, 75, key="age_slider")
+        sex  = st.selectbox("Gender", ["Female (0)", "Male (1)"], key="gender_select")
+        educ = st.slider("Education (years)", 1, 23, 12, key="educ_slider")
+        ses  = st.slider("Socioeconomic Status (1=high, 5=low)", 1, 5, 2, key="ses_slider")
+        mmse = st.slider("MMSE Score (0-30)", 0, 30, 25, key="mmse_slider")
 
     with col2:
-        cdr  = st.selectbox("CDR (Clinical Dementia Rating)", [0.0, 0.5, 1.0, 2.0])
-        etiv = st.slider("eTIV (Estimated Total Intracranial Volume)", 1100, 2300, 1600)
-        nwbv = st.slider("nWBV (Normalized Whole Brain Volume)", 0.60, 0.90, 0.75, step=0.01)
-        asf  = st.slider("ASF (Atlas Scaling Factor)", 0.80, 1.60, 1.10, step=0.01)
+        cdr  = st.selectbox("CDR (Clinical Dementia Rating)", [0.0, 0.5, 1.0, 2.0], key="cdr_select")
+        etiv = st.slider("eTIV (Estimated Total Intracranial Volume)", 1100, 2300, 1600, key="etiv_slider")
+        nwbv = st.slider("nWBV (Normalized Whole Brain Volume)", 0.60, 0.90, 0.75, step=0.01, key="nwbv_slider")
+        asf  = st.slider("ASF (Atlas Scaling Factor)", 0.80, 1.60, 1.10, step=0.01, key="asf_slider")
 
     sex_val = 1 if "Male" in sex else 0
 
@@ -37,10 +37,11 @@ def render(data: dict):
         "Prediction model",
         ["Decision Tree (Hunt's)", "Logistic Regression (Softer)"],
         horizontal=True,
+        key="model_radio"
     )
 
     # ── CLASSIFY ────────────────────────────────────────────────────────────
-    if st.button("🔍 Classify Patient", use_container_width=True):
+    if st.button("🔍 Classify Patient", use_container_width=True, key="classify_button"):
         patient = np.array([[age, sex_val, educ, ses, mmse, cdr, etiv, nwbv, asf]])
         if model_choice == "Decision Tree (Hunt's)":
             pred = model_pipeline.predict(patient)[0]

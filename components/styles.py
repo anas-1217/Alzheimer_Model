@@ -20,24 +20,35 @@ def _theme_tokens(theme: str) -> dict:
             "info_border": "#cbd5e1",
             "info_text": "#334155",
             "info_strong": "#1d4ed8",
+            "app_bg": "#ffffff",
+            "app_text": "#0f172a",
+            "app_muted_text": "#334155",
+
         }
     return {
-        "sidebar_bg": "linear-gradient(180deg, #1a3a2a 0%, #2d5a3d 100%)",
-        "sidebar_text": "#ffffff",
-        "sidebar_box_bg": "rgba(255,255,255,0.1)",
-        "sidebar_box_border": "rgba(255,255,255,0.2)",
-        "metric_bg": "linear-gradient(135deg, #1e1e3f 0%, #2d1b69 100%)",
-        "metric_border": "#7c3aed44",
-        "metric_shadow": "rgba(124,58,237,0.15)",
-        "metric_val": "#a78bfa",
-        "metric_text": "#94a3b8",
-        "section_border": "#7c3aed",
-        "section_title": "#e2e8f0",
-        "section_sub": "#94a3b8",
-        "info_bg": "#1e293b",
-        "info_border": "#334155",
-        "info_text": "#cbd5e1",
-        "info_strong": "#a78bfa",
+        "sidebar_bg": "linear-gradient(180deg, #020617 0%, #0f172a 100%)",
+        "sidebar_text": "#f8fafc",
+        "sidebar_box_bg": "rgba(255,255,255,0.05)",
+        "sidebar_box_border": "rgba(255,255,255,0.12)",
+
+        "metric_bg": "linear-gradient(135deg, #020617 0%, #111827 100%)",
+        "metric_border": "#6366f144",
+        "metric_shadow": "rgba(0,0,0,0.6)",
+        "metric_val": "#a5b4fc",
+        "metric_text": "#ffffff",
+
+        "section_border": "#818cf8",
+        "section_title": "#ffffff",     
+        "section_sub": "#cbd5e1",
+
+        "info_bg": "#020617",
+        "info_border": "#1f2937",
+        "info_text": "#f8fafc", 
+        "info_strong": "#a5b4fc",
+
+        "app_bg": "#020617",
+        "app_text": "#ffffff",
+        "app_muted_text": "#ffffff",
     }
 def get_plot_theme(theme: str) -> dict:
     if theme == "Light":
@@ -55,8 +66,8 @@ def get_plot_theme(theme: str) -> dict:
     return {
         "fig_bg": "#0f172a",
         "ax_bg": "#1e293b",
-        "title": "#e2e8f0",
-        "text": "#94a3b8",
+        "title": "#ffffff",
+        "text": "#f8fafc",
         "spine": "#334155",
         "legend_bg": "#1e293b",
         "bar_colors": ["#ef4444", "#22c55e", "#f59e0b"],
@@ -68,11 +79,59 @@ def inject_css(theme: str = "Dark"):
     custom_css = """
 <style>
 [data-testid="stAppViewContainer"] {
+    background-color: __APP_BG__;
     transition: background-color 0.25s ease;
+}
+
+[data-testid="stHeader"] {
+    background: __APP_BG__ !important;
+    border-bottom: 1px solid __INFO_BORDER__ !important;
+}
+
+[data-testid="stToolbar"] {
+    background: __APP_BG__ !important;
+}
+
+[data-testid="stDecoration"] {
+    background: transparent !important;
 }
 
 html, body, [class*="css"] {
     font-family: 'Segoe UI', sans-serif;
+    color: __APP_TEXT__;
+}
+
+[data-testid="stAppViewContainer"] .stMarkdown,
+[data-testid="stAppViewContainer"] .stMarkdown p,
+[data-testid="stAppViewContainer"] .stMarkdown li,
+[data-testid="stAppViewContainer"] label,
+[data-testid="stAppViewContainer"] .stRadio label,
+[data-testid="stAppViewContainer"] .stSlider label,
+[data-testid="stAppViewContainer"] .stSelectbox label,
+[data-testid="stAppViewContainer"] .st-emotion-cache-10trblm,
+[data-testid="stAppViewContainer"] .st-emotion-cache-q8sbsg {
+    color: __APP_TEXT__ !important;
+}
+
+[data-testid="stAppViewContainer"] .stCaption,
+[data-testid="stAppViewContainer"] small {
+    color: __APP_MUTED_TEXT__ !important;
+}
+
+/* Slider min/max/tick labels and widget helper text */
+[data-testid="stAppViewContainer"] .stSlider span,
+[data-testid="stAppViewContainer"] .stSlider div,
+[data-testid="stAppViewContainer"] .stRadio span,
+[data-testid="stAppViewContainer"] .stRadio div {
+    color: __APP_TEXT__ !important;
+}
+
+/* Ensure toolbar/deploy text/icons stay visible in dark mode */
+[data-testid="stHeader"] button,
+[data-testid="stHeader"] [role="button"],
+[data-testid="stToolbar"] button,
+[data-testid="stToolbar"] [role="button"] {
+    color: __APP_TEXT__ !important;
 }
 
 [data-testid="stSidebar"] {
@@ -146,5 +205,8 @@ html, body, [class*="css"] {
         .replace("__INFO_BORDER__", t["info_border"])
         .replace("__INFO_TEXT__", t["info_text"])
         .replace("__INFO_STRONG__", t["info_strong"])
+        .replace("__APP_BG__", t["app_bg"])
+        .replace("__APP_TEXT__", t["app_text"])
+        .replace("__APP_MUTED_TEXT__", t["app_muted_text"])
     )
     st.markdown(custom_css, unsafe_allow_html=True)

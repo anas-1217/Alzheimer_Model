@@ -5,7 +5,15 @@ from components.ui import section, metric_card
 
 def render(data: dict):
     st.title("🧠 AlzDetect AI")
-    st.markdown("##### Alzheimer's Disease Classification using Hunt's Decision Tree + SMOTE Pipeline")
+    st.markdown("""
+    <div class="info-box">
+    <strong>AlzDetect AI</strong><br>
+    Alzheimer's Classification System<br>
+    <strong>Dataset:</strong> OASIS Longitudinal<br>
+    <strong>Model:</strong> Decision Tree (Hunt's Algo)<br>
+    <strong>Preprocessing:</strong> Mean Imputation → Robust Scaling → SMOTE
+    </div>
+    """, unsafe_allow_html=True)
     st.markdown("---")
 
     # ── METRICS ROW ─────────────────────────────────────────────────────────
