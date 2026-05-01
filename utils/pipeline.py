@@ -67,7 +67,6 @@ def load_and_preprocess():
         ("clf", LogisticRegression(
             max_iter=2000,
             class_weight="balanced",
-            multi_class="multinomial",
             random_state=42,
         )),
     ])
