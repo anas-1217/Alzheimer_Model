@@ -11,6 +11,10 @@ from sklearn.metrics import (
     confusion_matrix,
     accuracy_score,
     balanced_accuracy_score,
+    f1_score,
+    precision_score,
+    recall_score,
+    mean_squared_error,
 )
 from imblearn.over_sampling import SMOTE
 from imblearn.pipeline import Pipeline
@@ -78,6 +82,11 @@ def load_and_preprocess():
 
     acc = accuracy_score(y_test, y_pred)
     bal_acc = balanced_accuracy_score(y_test, y_pred)
+    f1_macro = f1_score(y_test, y_pred, average="macro")
+    precision_macro = precision_score(y_test, y_pred, average="macro", zero_division=0)
+    recall_macro = recall_score(y_test, y_pred, average="macro", zero_division=0)
+    y_true_one_hot = np.eye(len(label_names))[y_test]
+    rmse = np.sqrt(mean_squared_error(y_true_one_hot, y_proba))
     cm = confusion_matrix(y_test, y_pred)
     report = classification_report(y_test, y_pred, target_names=label_names, output_dict=True)
     log_acc = accuracy_score(y_test, y_pred_log)
@@ -96,6 +105,46 @@ def load_and_preprocess():
     class_dist_before = dict(zip(*np.unique(y, return_counts=True)))
     class_dist_after = dict(zip(*np.unique(y_resampled_viz, return_counts=True)))
 
+    # Bias / fairness check on protected and demographic slices.
+    eval_df = X_test.copy().reset_index(drop=True)
+    eval_df["y_true"] = y_test
+    eval_df["y_pred"] = y_pred
+    eval_df["sex_group"] = eval_df["M/F"].map({0: "Female", 1: "Male"}).fillna("Unknown")
+
+    age_bins = [-np.inf, 69, 79, np.inf]
+    age_labels = ["<70", "70-79", "80+"]
+    eval_df["age_group"] = pd.cut(eval_df["Age"], bins=age_bins, labels=age_labels)
+    eval_df["age_group"] = eval_df["age_group"].astype(str).replace("nan", "Unknown")
+
+    def _group_metrics(frame: pd.DataFrame, group_col: str):
+        rows = []
+        for group_name, group_frame in frame.groupby(group_col):
+            if len(group_frame) == 0:
+                continue
+            rows.append({
+                "group": str(group_name),
+                "n_samples": int(len(group_frame)),
+                "accuracy": accuracy_score(group_frame["y_true"], group_frame["y_pred"]),
+                "f1_macro": f1_score(group_frame["y_true"], group_frame["y_pred"], average="macro", zero_division=0),
+                "recall_macro": recall_score(group_frame["y_true"], group_frame["y_pred"], average="macro", zero_division=0),
+            })
+        return pd.DataFrame(rows)
+
+    bias_by_sex = _group_metrics(eval_df, "sex_group")
+    bias_by_age = _group_metrics(eval_df, "age_group")
+
+    def _max_disparity(group_df: pd.DataFrame, metric: str):
+        if group_df.empty or group_df[metric].isna().all():
+            return 0.0
+        return float(group_df[metric].max() - group_df[metric].min())
+
+    bias_summary = {
+        "sex_accuracy_gap": _max_disparity(bias_by_sex, "accuracy"),
+        "sex_f1_gap": _max_disparity(bias_by_sex, "f1_macro"),
+        "age_accuracy_gap": _max_disparity(bias_by_age, "accuracy"),
+        "age_f1_gap": _max_disparity(bias_by_age, "f1_macro"),
+    }
+
     # Keep direct access to fitted tree for interpretability pages.
     clf = tree_pipeline.named_steps["clf"]
 
@@ -112,6 +161,10 @@ def load_and_preprocess():
         "y_proba": y_proba,
         "acc": acc,
         "balanced_acc": bal_acc,
+        "f1_macro": f1_macro,
+        "precision_macro": precision_macro,
+        "recall_macro": recall_macro,
+        "rmse": rmse,
         "cm": cm,
         "report": report,
         "log_acc": log_acc,
@@ -122,5 +175,8 @@ def load_and_preprocess():
         "label_names": label_names,
         "class_dist_before": class_dist_before,
         "class_dist_after": class_dist_after,
+        "bias_by_sex": bias_by_sex,
+        "bias_by_age": bias_by_age,
+        "bias_summary": bias_summary,
         "df": df_model,
     }

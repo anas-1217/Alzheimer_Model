@@ -1,5 +1,6 @@
 import streamlit as st
-import numpy as np
+import pandas as pd
+import time
 import matplotlib.pyplot as plt
 from components.ui import section, prediction_box
 
@@ -14,6 +15,7 @@ def render(data: dict):
     logistic_pipeline = data['logistic_pipeline']
     label_names = data['label_names']
     pt = data.get("plot_theme", {})
+    features = data["features"]
 
     # ── INPUT FORM ──────────────────────────────────────────────────────────
     col1, col2 = st.columns(2)
@@ -40,15 +42,25 @@ def render(data: dict):
         key="model_radio"
     )
 
-    # ── CLASSIFY ────────────────────────────────────────────────────────────
-    if st.button("🔍 Classify Patient", use_container_width=True, key="classify_button"):
-        patient = np.array([[age, sex_val, educ, ses, mmse, cdr, etiv, nwbv, asf]])
+    realtime_mode = st.toggle("Real-time prediction mode", value=True, help="When enabled, predictions update automatically as values change.")
+
+    def run_prediction():
+        patient_values = [age, sex_val, educ, ses, mmse, cdr, etiv, nwbv, asf]
+        patient_df = pd.DataFrame([patient_values], columns=features)
+        started = time.perf_counter()
         if model_choice == "Decision Tree (Hunt's)":
-            pred = model_pipeline.predict(patient)[0]
-            proba = model_pipeline.predict_proba(patient)[0]
+            pred = model_pipeline.predict(patient_df)[0]
+            proba = model_pipeline.predict_proba(patient_df)[0]
         else:
-            pred = logistic_pipeline.predict(patient)[0]
-            proba = logistic_pipeline.predict_proba(patient)[0]
+            pred = logistic_pipeline.predict(patient_df)[0]
+            proba = logistic_pipeline.predict_proba(patient_df)[0]
+        latency_ms = (time.perf_counter() - started) * 1000
+        return patient_df, pred, proba, latency_ms
+
+    # ── CLASSIFY ────────────────────────────────────────────────────────────
+    should_predict = realtime_mode or st.button("🔍 Classify Patient", use_container_width=True, key="classify_button")
+    if should_predict:
+        patient, pred, proba, latency_ms = run_prediction()
 
         pred_label = label_names[pred]
 
@@ -77,7 +89,9 @@ def render(data: dict):
         st.pyplot(fig)
         plt.close()
 
-        if model_choice == "Calibrated Decision Tree (Hunt's)":
+        st.caption(f"Inference latency: {latency_ms:.2f} ms")
+
+        if model_choice == "Decision Tree (Hunt's)":
             # Leaf-level support explains repeated probability patterns in trees.
             x_imp = tree_pipeline.named_steps["imputer"].transform(patient)
             x_scaled = tree_pipeline.named_steps["scaler"].transform(x_imp)

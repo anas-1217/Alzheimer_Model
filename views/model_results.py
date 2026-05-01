@@ -13,6 +13,10 @@ def render(data: dict):
     clf         = data['clf']
     acc         = data['acc']
     bal_acc     = data['balanced_acc']
+    f1_macro    = data['f1_macro']
+    precision_m = data['precision_macro']
+    recall_m    = data['recall_macro']
+    rmse        = data['rmse']
     log_acc     = data['log_acc']
     log_bal_acc = data['log_bal_acc']
     cv_scores   = data['cv_scores']
@@ -21,14 +25,23 @@ def render(data: dict):
     report      = data['report']
     features    = data['features']
     label_names = data['label_names']
+    bias_by_sex = data['bias_by_sex']
+    bias_by_age = data['bias_by_age']
+    bias_summary = data['bias_summary']
     pt = data.get("plot_theme", {})
 
     # ── METRICS ─────────────────────────────────────────────────────────────
     section("Performance Metrics")
-    c1, c2, c3 = st.columns(3)
+    c1, c2, c3, c4 = st.columns(4)
     c1.markdown(metric_card(f"{acc*100:.1f}%",               "Test Accuracy"),              unsafe_allow_html=True)
     c2.markdown(metric_card(f"{bal_acc*100:.1f}%",           "Test Balanced Accuracy"),     unsafe_allow_html=True)
-    c3.markdown(metric_card(f"{cv_scores.mean()*100:.1f}%",  "CV Balanced Accuracy (Mean)"), unsafe_allow_html=True)
+    c3.markdown(metric_card(f"{f1_macro*100:.1f}%",          "F1 Macro"), unsafe_allow_html=True)
+    c4.markdown(metric_card(f"{cv_scores.mean()*100:.1f}%",  "CV Balanced Accuracy (Mean)"), unsafe_allow_html=True)
+
+    c7, c8, c9 = st.columns(3)
+    c7.markdown(metric_card(f"{precision_m*100:.1f}%", "Precision Macro"), unsafe_allow_html=True)
+    c8.markdown(metric_card(f"{recall_m*100:.1f}%", "Recall Macro"), unsafe_allow_html=True)
+    c9.markdown(metric_card(f"{rmse:.3f}", "RMSE (Probabilities)", "Lower is better"), unsafe_allow_html=True)
 
     section("Softer Model Comparison (Logistic Regression)")
     c4, c5, c6 = st.columns(3)
@@ -76,6 +89,21 @@ def render(data: dict):
     plt.tight_layout()
     st.pyplot(fig)
     plt.close()
+
+    # ── BIAS CHECK ───────────────────────────────────────────────────────────
+    section("Bias Check (Demographic Slices)")
+    b1, b2, b3, b4 = st.columns(4)
+    b1.markdown(metric_card(f"{bias_summary['sex_accuracy_gap']*100:.1f}%", "Sex Accuracy Gap"), unsafe_allow_html=True)
+    b2.markdown(metric_card(f"{bias_summary['sex_f1_gap']*100:.1f}%", "Sex F1 Gap"), unsafe_allow_html=True)
+    b3.markdown(metric_card(f"{bias_summary['age_accuracy_gap']*100:.1f}%", "Age Accuracy Gap"), unsafe_allow_html=True)
+    b4.markdown(metric_card(f"{bias_summary['age_f1_gap']*100:.1f}%", "Age F1 Gap"), unsafe_allow_html=True)
+
+    st.caption("Gap = max(group metric) - min(group metric). Smaller gaps indicate more consistent behavior across groups.")
+
+    st.markdown("#### By Sex")
+    st.dataframe(bias_by_sex.round(3), use_container_width=True)
+    st.markdown("#### By Age Group")
+    st.dataframe(bias_by_age.round(3), use_container_width=True)
 
     # ── FEATURE IMPORTANCE ──────────────────────────────────────────────────
     section("Feature Importance")
